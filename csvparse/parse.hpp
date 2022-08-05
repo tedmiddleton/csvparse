@@ -14,7 +14,7 @@
 namespace csvparse
 {
 
-template<char DELIMITER=',', bool ALLOW_LF=true>
+template<int DELIMITER=',', bool ALLOW_LF=true>
 class parser
 {
     enum class eSTATE

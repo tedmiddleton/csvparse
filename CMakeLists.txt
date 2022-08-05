@@ -30,8 +30,8 @@ endif()
 set( version 0.1.0 )
 
 add_library( csvparse STATIC
-   csvparse/csvparse.hpp 
-   csvparse/csvparse.cpp 
+   csvparse/parse.hpp 
+   csvparse/parse.cpp 
    )
 
 add_subdirectory( tests )

@@ -26,12 +26,14 @@ R"(Year,Make,Model,Description,Price
 1996,Jeep,Grand Cherokee,"MUST SELL!
 air, moon roof, loaded",4799.00)";
 
+    auto endrecord = [](auto n) { std::cout << "End record: " << n << "\n"; };
+    auto endfield = [](auto n) { std::cout << "End field: " << n << "\n"; };
     SECTION( "allow lf" )
     {
         csvparse::parser parser;
         std::string test{ teststr };
         for (int ch : test) {
-            parser.advance(ch);
+            parser.advance(ch, endfield, endrecord);
         }
         REQUIRE(!parser.is_error());
     }
@@ -41,7 +43,7 @@ air, moon roof, loaded",4799.00)";
         csvparse::parser<',', false> parser;
         std::string test{ teststr };
         for (int ch : test) {
-            parser.advance(ch);
+            parser.advance(ch, endfield, endrecord);
         }
         REQUIRE(parser.is_error());
     }
@@ -51,7 +53,7 @@ air, moon roof, loaded",4799.00)";
         csvparse::parser<';'> parser;
         std::string test{ teststr };
         for (int ch : test) {
-            parser.advance(ch);
+            parser.advance(ch, endfield, endrecord);
         }
         REQUIRE(parser.is_error());
     }
@@ -67,12 +69,14 @@ R"(Year;Make;Model;Description;Price
 1996;Jeep;Grand Cherokee;"MUST SELL!
 air; moon roof, loaded";4799,00)";
 
+    auto endrecord = [](auto n) { std::cout << "End record: " << n << "\n"; };
+    auto endfield = [](auto n) { std::cout << "End field: " << n << "\n"; };
     SECTION( "semicolon" )
     {
         csvparse::parser<';'> parser;
         std::string test{ teststr };
         for (int ch : test) {
-            parser.advance(ch);
+            parser.advance(ch, endfield, endrecord);
         }
         REQUIRE(!parser.is_error());
     }
@@ -82,7 +86,7 @@ air; moon roof, loaded";4799,00)";
         csvparse::parser parser;
         std::string test{ teststr };
         for (int ch : test) {
-            parser.advance(ch);
+            parser.advance(ch, endfield, endrecord);
         }
         REQUIRE(parser.is_error());
     }

@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef INCLUDED_csvparse_csvparse_hpp
-#define INCLUDED_csvparse_csvparse_hpp
+#ifndef INCLUDED_csvparse_parse_hpp
+#define INCLUDED_csvparse_parse_hpp
 
 #include <istream>
 #include <iostream>
@@ -32,13 +32,8 @@ class parser
 public:
     parser()
         : m_state(eSTATE::START)
+        , m_current(0)
     {
-    }
-
-    explicit parser(size_t reserve)
-        : m_state(eSTATE::START)
-    {
-        m_indices.reserve(reserve);
     }
 
     bool
@@ -47,25 +42,9 @@ public:
         return m_state == eSTATE::ERROR;
     }
 
-    std::string
-    state() const
-    {
-        switch (m_state) {
-            case eSTATE::START:             return "START";
-            case eSTATE::DELIM:             return "DELIM";
-            case eSTATE::BODY:              return "BODY";
-            case eSTATE::START_BODY_QUOTE:  return "START_BODY_QUOTE";
-            case eSTATE::QUOTED_BODY:       return "QUOTED_BODY";
-            case eSTATE::QUOTE:             return "QUOTE";
-            case eSTATE::CR:                return "CR";
-            case eSTATE::LF:                return "LF";
-            case eSTATE::ERROR:             return "ERROR";
-        }
-        return "";
-    }
-
-    void
-    advance(int ch)
+    template<typename END_FIELD, typename END_RECORD>
+    bool
+    advance(int ch, END_FIELD& end_field, END_RECORD& end_record)
     {
         std::cout << "Got character " << ch << 
             " (" << (char)ch << ") in state " << state() << "\n";
@@ -77,6 +56,7 @@ public:
                 switch (ch) {
                 case DELIMITER:
                     m_state = eSTATE::DELIM;
+                    end_field(m_current);
                     break;
                 case '"':
                     m_state = eSTATE::START_BODY_QUOTE;
@@ -87,6 +67,7 @@ public:
                 case '\n':
                     if constexpr (ALLOW_LF) {
                         m_state = eSTATE::LF;
+                        end_record(m_current);
                     }
                     else {
                         m_state = eSTATE::ERROR;
@@ -103,6 +84,7 @@ public:
                 switch (ch) {
                 case DELIMITER:
                     m_state = eSTATE::DELIM;
+                    end_field(m_current);
                     break;
                 case '\r':
                     m_state = eSTATE::CR;
@@ -110,6 +92,7 @@ public:
                 case '\n':
                     if constexpr (ALLOW_LF) {
                         m_state = eSTATE::LF;
+                        end_record(m_current);
                     }
                     else {
                         m_state = eSTATE::ERROR;
@@ -141,6 +124,7 @@ public:
                 switch (ch) {
                 case DELIMITER:
                     m_state = eSTATE::DELIM;
+                    end_field(m_current);
                     break;
                 case '"':
                     m_state = eSTATE::QUOTED_BODY;
@@ -156,6 +140,7 @@ public:
                 switch (ch) {
                 case '\n':
                     m_state = eSTATE::LF;
+                    end_record(m_current);
                     break;
                 default:
                     m_state = eSTATE::ERROR;
@@ -166,13 +151,33 @@ public:
         case eSTATE::ERROR:
             break;
         }
+        ++m_current;
+        return !is_error();
+    }
+
+private:
+    std::string
+    state() const
+    {
+        switch (m_state) {
+            case eSTATE::START:             return "START";
+            case eSTATE::DELIM:             return "DELIM";
+            case eSTATE::BODY:              return "BODY";
+            case eSTATE::START_BODY_QUOTE:  return "START_BODY_QUOTE";
+            case eSTATE::QUOTED_BODY:       return "QUOTED_BODY";
+            case eSTATE::QUOTE:             return "QUOTE";
+            case eSTATE::CR:                return "CR";
+            case eSTATE::LF:                return "LF";
+            case eSTATE::ERROR:             return "ERROR";
+        }
+        return "";
     }
 
     // +ve is a column break, -ve is a row/line break
-    std::vector<int64_t> m_indices;
     eSTATE m_state;
+    size_t m_current;
 };
 
 } // namespace csvparse
  
-#endif // INCLUDED_csvparse_csvparse_hpp
+#endif // INCLUDED_csvparse_parse_hpp
